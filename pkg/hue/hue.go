@@ -26,7 +26,7 @@ type EntertainmentLightState struct {
 }
 
 func EntertainmentSend(conf config.Config, states []EntertainmentLightState) {
-	url := fmt.Sprintf("http://%s/api/%s/groups/%s/action", conf.HueBridgeIP, conf.Username, conf.EntertainmentZone)
+	url := fmt.Sprintf("http://%s/api/%s/groups/%d/action", conf.HueBridgeIP, conf.Username, conf.EntertainmentZone)
 
 	body, err := json.Marshal(states)
 	if err != nil {

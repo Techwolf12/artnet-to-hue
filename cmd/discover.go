@@ -7,6 +7,7 @@ package cmd
 import (
 	"fmt"
 	"github.com/techwolf12/artnet-to-hue/pkg/hue"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -23,7 +24,7 @@ func runDiscover(cmd *cobra.Command, args []string) {
 	fmt.Println("Running discovery of Hue bridges...")
 	hueBridges, err := hue.DiscoverBridges()
 	if err != nil {
-		fmt.Printf("Error discovering Hue bridges: %v\n", err)
+		log.Printf("Error discovering Hue bridges: %v\n", err)
 		return
 	}
 	for _, bridge := range hueBridges {
