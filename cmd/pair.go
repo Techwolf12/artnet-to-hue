@@ -5,8 +5,10 @@ Copyright © 2025 Christiaan de Die le Clercq <contact@techwolf12.nl>
 package cmd
 
 import (
+	"fmt"
 	"github.com/techwolf12/artnet-to-hue/pkg/hue"
 	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -25,7 +27,12 @@ func pairRun(cmd *cobra.Command, args []string) {
 		log.Println("Error: Hue bridge IP address is required")
 		return
 	}
-	deviceType := "artnet-to-hue#artnet-to-hue"
+	hostname, err := os.Hostname()
+	if err != nil {
+		log.Printf("Error getting hostname, fallback: %v\n", err)
+		hostname = "unknown"
+	}
+	deviceType := fmt.Sprintf("artnet-to-hue#%s", hostname)
 	username, clientKey, err := hue.GetHueUsername(hueBridgeIP, deviceType)
 	if err != nil {
 		log.Printf("Error getting Hue username: %v\n", err)

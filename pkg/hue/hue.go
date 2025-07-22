@@ -47,7 +47,7 @@ func GetHueApplicationID(config config.Config) (string, error) {
 }
 
 func GetHueUsername(bridgeIP net.IP, deviceType string) (string, string, error) {
-	url := fmt.Sprintf("http://%s/api", bridgeIP)
+	url := fmt.Sprintf("https://%s/api", bridgeIP)
 	body := fmt.Sprintf(`{"devicetype":"%s","generateclientkey":true}`, deviceType)
 	req, err := http.NewRequest("POST", url, strings.NewReader(body))
 	if err != nil {
@@ -55,7 +55,11 @@ func GetHueUsername(bridgeIP net.IP, deviceType string) (string, string, error) 
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 10 * time.Second}
+	client := &http.Client{Timeout: 10 * time.Second,
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		},
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to send request: %w", err)
