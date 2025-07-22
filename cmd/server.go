@@ -75,8 +75,8 @@ func serverRun(cmd *cobra.Command, args []string) {
 		ArtNetStartAddress: artnetDMXStart,
 		Debug:              debug,
 	}
-	fmt.Printf("Starting server with Hue Bridge IP: %s, Username: %s, Entertainment Zone: %s, Art-Net Universe: %d, Art-Net DMX Start: %d\n",
-		hueBridgeIP, username, entertainmentZone, artnetUniverse, artnetDMXStart)
+	fmt.Printf("Starting server with:\n Hue Bridge IP: %s\n Entertainment Zone: %s\n Art-Net Universe: %d\n Art-Net DMX Start: %d\n",
+		hueBridgeIP, entertainmentZone, artnetUniverse, artnetDMXStart)
 
 	listener, err := artnet.NewListener(config)
 	if err != nil {
@@ -96,6 +96,11 @@ func serverRun(cmd *cobra.Command, args []string) {
 	}
 	streamer := &hue.Streamer{}
 	err = streamer.Connect(config, hueAppId)
+	if err != nil {
+		log.Printf("Failed to connect to Hue bridge: %v", err)
+		return
+	}
+	fmt.Println("Ready to receive Art-Net packets and stream to Hue lights!")
 
 	listener.OnUpdate(func(values []byte) {
 		if config.Debug {

@@ -38,8 +38,9 @@ func pairRun(cmd *cobra.Command, args []string) {
 		log.Printf("Error getting Hue username: %v\n", err)
 		return
 	}
-	log.Println("Be sure to read the help for server. You can now use this username to run the server with the following command:")
-	log.Printf("artnet-to-hue server -i %s -u %s -c %s\n", hueBridgeIP, username, clientKey)
+	fmt.Println("Be sure to read the help for server. You can now use this username to run the server with the following command:")
+	fmt.Printf("artnet-to-hue server -i %s -u %s -c %s -e zone\n", hueBridgeIP, username, clientKey)
+	fmt.Printf("To get the entertainment zone ID's use: artnet-to-hue bridgeInfo -i %s -u %s", hueBridgeIP, username)
 }
 
 func init() {
