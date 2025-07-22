@@ -5,7 +5,8 @@ import "net"
 type Config struct {
 	HueBridgeIP        net.IP
 	Username           string
-	EntertainmentZone  int
+	ClientKey          string
+	EntertainmentZone  string
 	NumLights          int
 	ArtNetUniverse     uint16
 	ArtNetStartAddress int

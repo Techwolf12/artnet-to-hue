@@ -32,9 +32,14 @@ func serverRun(cmd *cobra.Command, args []string) {
 		fmt.Println("Error: Username for the Hue bridge is required")
 		return
 	}
-	entertainmentZone, _ := cmd.Flags().GetInt("entertainment-zone")
-	if entertainmentZone < 0 {
-		fmt.Println("Error: Entertainment zone ID must be a non-negative integer")
+	clientKey, _ := cmd.Flags().GetString("client-key")
+	if clientKey == "" {
+		fmt.Println("Error: Client key for the Hue bridge is required")
+		return
+	}
+	entertainmentZone, _ := cmd.Flags().GetString("entertainment-zone")
+	if entertainmentZone == "" {
+		fmt.Println("Error: Entertainment zone ID is required")
 		return
 	}
 	numLights, _ := cmd.Flags().GetInt("lights")
@@ -63,19 +68,34 @@ func serverRun(cmd *cobra.Command, args []string) {
 	config := artnetHueConfig.Config{
 		HueBridgeIP:        hueBridgeIP,
 		Username:           username,
+		ClientKey:          clientKey,
 		EntertainmentZone:  entertainmentZone,
 		NumLights:          numLights,
 		ArtNetUniverse:     artnetUniverse,
 		ArtNetStartAddress: artnetDMXStart,
 		Debug:              debug,
 	}
-	fmt.Printf("Starting server with Hue Bridge IP: %s, Username: %s, Entertainment Zone: %d, Art-Net Universe: %d, Art-Net DMX Start: %d\n",
+	fmt.Printf("Starting server with Hue Bridge IP: %s, Username: %s, Entertainment Zone: %s, Art-Net Universe: %d, Art-Net DMX Start: %d\n",
 		hueBridgeIP, username, entertainmentZone, artnetUniverse, artnetDMXStart)
 
 	listener, err := artnet.NewListener(config)
 	if err != nil {
 		panic(err)
 	}
+
+	hueAppId, err := hue.GetHueApplicationID(config)
+	if err != nil {
+		log.Printf("Failed to get Hue application ID: %v", err)
+		return
+	}
+
+	err = hue.StartEntertainmentArea(config)
+	if err != nil {
+		log.Printf("Failed to start entertainment area: %v", err)
+		return
+	}
+	streamer := &hue.HueStreamer{}
+	err = streamer.Connect(config, hueAppId)
 
 	listener.OnUpdate(func(values []byte) {
 		if config.Debug {
@@ -89,12 +109,16 @@ func serverRun(cmd *cobra.Command, args []string) {
 		for i := 0; i < config.NumLights; i++ {
 			startIndex := i * 3
 			states[i] = hue.EntertainmentLightState{
-				On:  values[startIndex] > 0,
-				Bri: int(values[startIndex+1]),
-				XY:  [2]float64{float64(values[startIndex+2]) / 255.0, float64(values[startIndex+2]) / 255.0},
+				Red:   int(values[startIndex]),
+				Green: int(values[startIndex+1]),
+				Blue:  int(values[startIndex+2]),
 			}
 		}
-		hue.EntertainmentSend(config, states)
+		err := streamer.StreamToHue(config, states)
+		if err != nil {
+			log.Printf("Failed to stream to Hue: %v", err)
+			return
+		}
 	})
 
 	select {}
@@ -105,7 +129,8 @@ func init() {
 
 	serverCmd.Flags().IPP("hue-bridge-ip", "i", nil, "IP address of the hue bridge")
 	serverCmd.Flags().StringP("username", "u", "", "Username for the hue bridge")
-	serverCmd.Flags().IntP("entertainment-zone", "e", 0, "Entertainment zone ID for the hue bridge")
+	serverCmd.Flags().StringP("client-key", "c", "", "Client key for the hue bridge (used for DTLS authentication)")
+	serverCmd.Flags().StringP("entertainment-zone", "e", "", "Entertainment zone ID for the hue bridge")
 	serverCmd.Flags().IntP("lights", "l", 10, "Number of lights in the entertainment zone (default: 10)")
 	serverCmd.Flags().Uint16P("artnet-universe", "n", 0, "Art-Net universe to listen on")
 	serverCmd.Flags().IntP("artnet-dmx-start", "a", 1, "Art-Net DMX start channel")
