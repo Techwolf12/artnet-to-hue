@@ -1,12 +1,9 @@
 package hue
 
 import (
-	"bytes"
 	"crypto/tls"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/pion/dtls/v2"
 	"github.com/techwolf12/artnet-to-hue/pkg/config"
 	"io"
 	"log"
@@ -16,101 +13,10 @@ import (
 	"time"
 )
 
-type HueBridgeInfo struct {
+type BridgeInfo struct {
 	ID                string `json:"id"`
 	InternalIPAddress string `json:"internalipaddress"`
 	Port              int    `json:"port"`
-}
-
-type EntertainmentConfigResponse struct {
-	Errors []interface{} `json:"errors"`
-	Data   []struct {
-		ID     string `json:"id"`
-		Name   string `json:"name"`
-		Status string `json:"status"`
-	} `json:"data"`
-}
-
-type EntertainmentLightState struct {
-	Red   int `json:"red"`
-	Green int `json:"green"`
-	Blue  int `json:"blue"`
-}
-
-type HueStreamer struct {
-	conn *dtls.Conn
-}
-
-func StartEntertainmentArea(config config.Config) error {
-	url := fmt.Sprintf("https://%s/clip/v2/resource/entertainment_configuration/%s", config.HueBridgeIP, config.EntertainmentZone)
-	body := []byte(`{"action":"start"}`)
-	req, err := http.NewRequest("PUT", url, bytes.NewReader(body))
-	if err != nil {
-		return err
-	}
-	req.Header.Set("hue-application-key", config.Username)
-	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{Timeout: 10 * time.Second,
-		Transport: &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}}
-	resp, err := client.Do(req)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to start entertainment area: %s", resp.Status)
-	}
-	return nil
-}
-
-func BuildHueStreamPacket(configID string, states []EntertainmentLightState) []byte {
-	protocolName := []byte("HueStream")
-	header := []byte{0x02, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00}
-	configIDBuf := make([]byte, 36)
-	copy(configIDBuf, configID)
-	var channels []byte
-	for i, state := range states {
-		ch := []byte{byte(i)}
-		ch = append(ch, byte(state.Red), byte(state.Red), byte(state.Green), byte(state.Green), byte(state.Blue), byte(state.Blue))
-		channels = append(channels, ch...)
-	}
-	return bytes.Join([][]byte{protocolName, header, configIDBuf, channels}, nil)
-}
-
-func (hs *HueStreamer) Connect(config config.Config, hueAppId string) error {
-	if hs.conn != nil {
-		return nil // Already connected
-	}
-	clientKey, err := hex.DecodeString(config.ClientKey)
-	if err != nil {
-		return fmt.Errorf("Failed to decode client key: %v", err)
-	}
-	cfg := &dtls.Config{
-		PSK: func(hint []byte) ([]byte, error) {
-			return clientKey, nil
-		},
-		PSKIdentityHint:    []byte(hueAppId),
-		CipherSuites:       []dtls.CipherSuiteID{dtls.TLS_PSK_WITH_AES_128_GCM_SHA256},
-		InsecureSkipVerify: true,
-		FlightInterval:     500 * time.Millisecond,
-	}
-	conn, err := dtls.Dial("udp", &net.UDPAddr{IP: config.HueBridgeIP, Port: 2100}, cfg)
-	if err != nil {
-		return fmt.Errorf("DTLS dial failed: %w", err)
-	}
-	hs.conn = conn
-	return nil
-}
-
-func (hs *HueStreamer) StreamToHue(config config.Config, states []EntertainmentLightState) error {
-	if hs.conn == nil {
-		return fmt.Errorf("DTLS connection not established")
-	}
-	packet := BuildHueStreamPacket(config.EntertainmentZone, states)
-	_, err := hs.conn.Write(packet)
-	return err
 }
 
 func GetHueApplicationID(config config.Config) (string, error) {
@@ -232,7 +138,7 @@ func GetEntertainmentConfigID(config config.Config) ([]EntertainmentConfig, erro
 	return entertainmentConfigs, nil
 }
 
-func DiscoverBridges() ([]HueBridgeInfo, error) {
+func DiscoverBridges() ([]BridgeInfo, error) {
 	url := "https://discovery.meethue.com/"
 	client := &http.Client{Timeout: 10 * time.Second}
 	resp, err := client.Get(url)
@@ -246,7 +152,7 @@ func DiscoverBridges() ([]HueBridgeInfo, error) {
 		}
 	}(resp.Body)
 
-	var bridges []HueBridgeInfo
+	var bridges []BridgeInfo
 	if err := json.NewDecoder(resp.Body).Decode(&bridges); err != nil {
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}

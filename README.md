@@ -36,10 +36,14 @@ Next, you can pair your Hue Bridge by running the command provided in the previo
 ```bash
 artnet-to-hue pair -i <ip-address>
 ```
-After pairing, it shows you the command to run the server:
+After pairing, you can run bridgeInfo to see the entertainment zones available:
+```bash
+artnet-to-hue bridgeInfo -i <ip-address> -u <username>
+```
+Finally, you can start the server to listen for Art-Net packets and control your Hue lights:
 
 ```bash
-artnet-to-hue server -i <ip-address>
+artnet-to-hue server -i <ip-address> -u <username> -c <client-key> -e <entertainment-zone> -l <amount-of-lights>
 ```
 
 Be sure to use help to see all available options.

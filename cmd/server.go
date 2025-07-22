@@ -94,7 +94,7 @@ func serverRun(cmd *cobra.Command, args []string) {
 		log.Printf("Failed to start entertainment area: %v", err)
 		return
 	}
-	streamer := &hue.HueStreamer{}
+	streamer := &hue.Streamer{}
 	err = streamer.Connect(config, hueAppId)
 
 	listener.OnUpdate(func(values []byte) {
