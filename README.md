@@ -36,6 +36,8 @@ Next, you can pair your Hue Bridge by running the command provided in the previo
 ```bash
 artnet-to-hue pair -i <ip-address>
 ```
+Be sure to save the username and client key generated after pairing, as you will need them to control your lights.
+
 After pairing, you can run bridgeInfo to see the entertainment zones available:
 ```bash
 artnet-to-hue bridgeInfo -i <ip-address> -u <username>
@@ -47,6 +49,42 @@ artnet-to-hue server -i <ip-address> -u <username> -c <client-key> -e <entertain
 ```
 
 Be sure to use help to see all available options.
+
+## Options
+
+## `artnet-to-hue server` Flags
+
+| Flag | Shorthand | Type     | Default | Description                                                  |
+|------|-----------|----------|---------|--------------------------------------------------------------|
+| `--hue-bridge-ip` | `-i` | IP Address | *none*  | IP address of the Hue bridge                                 |
+| `--username`      | `-u` | String     | *none*  | Username for the Hue bridge                                  |
+| `--client-key`    | `-c` | String     | *none*  | Client key for the Hue bridge (used for DTLS authentication) |
+| `--entertainment-zone` | `-e` | String | *none*  | Entertainment zone ID for the Hue bridge                     |
+| `--lights`        | `-l` | Integer    | `10`    | Number of lights in the entertainment zone                   |
+| `--artnet-universe` | `-n` | UInt16   | `0`     | Art-Net universe to listen on                                |
+| `--artnet-dmx-start` | `-a` | Integer | `1`     | Art-Net DMX start channel                                    |
+| `--debug`         | `-d` | Boolean    | `false` | Debug logging )                                              |
+
+---
+
+## `artnet-to-hue pair` Flags
+
+| Flag | Shorthand | Type      | Default | Description |
+|------|-----------|-----------|---------|-------------|
+| `--hue-bridge-ip` | `-i` | IP Address | *none*  | IP address of the Hue bridge |
+
+---
+
+## `artnet-to-hue bridgeInfo` Flags
+
+| Flag | Shorthand | Type      | Default | Description |
+|------|-----------|-----------|---------|-------------|
+| `--hue-bridge-ip` | `-i` | IP Address | *none*  | IP address of the Hue bridge |
+| `--username`      | `-u` | String     | *none*  | Username for the Hue bridge |
+
+## Contributing
+If you want to contribute to this project, feel free to open an issue or a pull request.
+You can also help by reporting bugs or suggesting features.
 
 ## License
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
